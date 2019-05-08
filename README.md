@@ -1,2 +1,4 @@
 # endgame
-Time series project
+Time series project 
+
+Connected to R Studio
