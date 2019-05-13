@@ -214,3 +214,28 @@ categoricalData <- getDataFrameWith50Categories(data)
 describe(categoricalData)
 
 funModeling::freq(categoricalData)
+
+
+getNumericalDF <- function(df){
+  numericDF <- df
+  features <- names(numericDF)
+  for(feature in features){
+    if(!is.numeric(df[,feature])){
+      numericDF[feature] <- NULL
+    }
+  }
+  numericDF
+}
+
+numericalData <- getNumericalDF(data) # which are num/int data type
+numericalDataFeature <- names(numericalData) 
+categoricalDataFeature <- names(categoricalData)
+numericalData <- dplyr::select(numericalData, - dplyr::one_of(categoricalDataFeature)) # select that feature which are not categoricalDataFeature
+
+funModeling::profiling_num(numericalData)
+
+
+plot_histogram(numericalData)
+
+
+plot_density(numericalData)
