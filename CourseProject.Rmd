@@ -1,0 +1,242 @@
+---
+title: "TimeSeriesProjectEDA"
+author: "Team - Endgame"
+date: "5/31/2019"
+output: html_document
+---
+
+
+#Read the prices data and make a subset
+```{r}
+prices = read.csv('./Data/2sigmaData/2sigma_market_train_data.csv')
+head(prices)
+```
+
+```{r}
+prices[prices['assetName']=='Apple Inc']
+```
+
+
+#cut down the data size
+
+```{r}
+str(prices)
+```
+
+
+```{r}
+dim(prices)
+```
+
+
+```{r}
+prices_recent <- tail(prices,1000000)
+dim(prices_recent)
+```
+```{r}
+#
+```
+
+
+```{r}
+prices_recent$time <- as.Date(prices_recent$time)
+```
+
+
+```{r}
+head(prices_recent,10)
+```
+
+```{r}
+#Count of records for each day
+library(plyr)
+#plot(table(prices_recent$time))
+counts <- table(prices_recent$time)
+daily.count <- count(prices_recent,'time')
+dim(daily.count)
+barplot(daily.count$freq,col='blue')
+plot(counts,col='blue',type='l')
+
+```
+
+
+
+# Load news data an subset for last two years
+```{r}
+news = read.csv('./Data/2sigmaData/news_train_df.csv')
+head(news)
+```
+
+```{r}
+news_recent <- tail(news,3000000)
+head(news_recent)
+```
+
+#Save Subset dataframes to csv
+```{r}
+write.csv(prices_recent,'prices_recent.csv')
+```
+
+```{r}
+write.csv(news_recent,'news_recent.csv')
+```
+
+
+
+```{r}
+dim(prices_recent)
+dim(news_recent)
+```
+
+```{r}
+str(prices_recent)
+str(news_recent)
+```
+
+
+```{r}
+levels(prices_recent$assetName)
+```
+
+```{r}
+apple = prices_recent[prices_recent$assetName=="Apple Inc",]
+head(apple)
+```
+
+```{r}
+apple_news = news_recent[news_recent$assetName =='Apple Inc',]
+head(apple_news)
+```
+
+```{r}
+appleClosingPrice = apple$close
+appleOpeningPrice = apple$open
+plot(appleClosingPrice,type='l',col='red')
+lines(appleOpeningPrice,type='l',col='green')
+```
+
+```{r}
+library(forecast)
+(apple.model1 <- auto.arima(appleOpeningPrice,stepwise = F,approximation = F))
+```
+
+```{r}
+ggAcf(diff(appleOpeningPrice))
+```
+
+```{r}
+ggAcf(apple.model1$residuals)
+```
+
+```{r}
+Box.test(apple.model1$residuals,type = 'Ljung-Box',lag=20)
+```
+
+```{r}
+checkresiduals(apple.model1)
+```
+
+
+```{r}
+(apple.model2 <- arfima(appleOpeningPrice))
+```
+
+```{r}
+checkresiduals(apple.model2)
+```
+
+```{r}
+dim(apple_news)
+```
+
+```{r}
+length(apple_news$sentimentClass)
+```
+
+```{r}
+count(apple_news,'time')
+```
+
+
+
+```{r}
+head(apple)
+```
+
+
+# Analyze Traget variable for Apple returnsOpenNextMktres10
+float64) - 10 day, market-residualized return. This is the target variable used in competition scoring. The market data has been filtered such that returnsOpenNextMktres10 is always not null.
+```{r}
+plot(apple$returnsOpenNextMktres10,type='l')
+```
+
+```{r}
+acf(diff(apple$returnsOpenNextMktres10))
+```
+
+```{r}
+mktres_apple.arima.model1 <- auto.arima(apple$returnsOpenNextMktres10,stepwise = F, approximation = F)
+```
+
+```{r}
+checkresiduals(mktres_apple.arima.model1)
+```
+
+```{r}
+mktres_apple.arFima.model2 <- arfima(apple$returnsOpenNextMktres10)
+```
+
+```{r}
+checkresiduals(mktres_apple.arFima.model2)
+```
+
+
+```{r}
+apple_news['date'] <- as.Date(apple_news$time)
+#head(apple_news['date'])
+#aggregate(apple_news['time'],by=apple_news['date'],count)
+```
+
+```{r}
+apple_news_count <- count(apple_news,'date')
+plot(apple_news_count$freq,type='l')
+```
+
+```{r}
+library(ggplot2)
+p<-ggplot(data=apple_news_count, aes(x=date, y=freq)) +
+  geom_bar(stat="identity")
+p
+```
+
+```{r}
+apple_new_doi <- apple_news[,c('date','sentimentClass')]
+head(apple_new_doi)
+```
+
+```{r}
+apple.daily.sentiment <- aggregate(apple_new_doi['sentimentClass'],by=apple_new_doi['date'],sum)
+plot(apple.daily.sentiment,type='l')
+```
+
+```{r}
+apple.daily.sentiment['assetCode'] = "AAPL.O"
+head(apple.daily.sentiment)
+```
+
+```{r}
+#head(apple)
+apple['date'] = as.Date(apple$time)
+head(apple)
+```
+
+```{r}
+merge(apple, apple.daily.sentiment,by='date')
+```
+
+#True Sentiment
+```{r}
+apple_news['trueSentiment']<- (apple_news$sentimentPositive - apple_news$sentimentNegative) * (apple_news$sentimentWordCount/apple_news$wordCount)
+head(apple_news)
+```
+
