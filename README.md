@@ -1,4 +1,4 @@
 # endgame
-Time series project 
+Predict stock prices using News data
 
 Connected to R Studio
