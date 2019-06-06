@@ -786,21 +786,21 @@ boeing.smape <- cbind(Arfima=sMAPE(boeing.actuals, arf.boeing$mean),
                       NeuralNet=sMAPE(boeing.actuals, nn.boeing$mean),
                       XGB=sMAPE(boeing.actuals, xgb.boeing),
                       Mean=sMAPE(boeing.actuals, mean.boeing),
-                      Mean-TS=sMAPE(boeing.actuals, tsmean.boeing))
+                      'Mean-TS'=sMAPE(boeing.actuals, tsmean.boeing))
 
 amazon.smape <- cbind(Arfima=sMAPE(amazon.actuals, arf.amazon$mean),
                       ARIMA=sMAPE(amazon.actuals, arima.amazon$mean),
                       NeuralNet=sMAPE(amazon.actuals, nn.amazon$mean),
                       XGB=sMAPE(amazon.actuals, xgb.amazon),
                       Mean=sMAPE(amazon.actuals, mean.amazon),
-                      Mean-TS=sMAPE(amazon.actuals, tsmean.amazon))
+                      'Mean-TS'=sMAPE(amazon.actuals, tsmean.amazon))
 
 apple.smape <- cbind(Arfima=sMAPE(apple.actuals, arf.apple$mean),
                       ARIMA=sMAPE(apple.actuals, arima.apple$mean),
                       NeuralNet=sMAPE(apple.actuals, nn.apple$mean),
                       XGB=sMAPE(apple.actuals, xgb.apple),
                       Mean=sMAPE(amazon.actuals, mean.apple),
-                      Mean-TS=sMAPE(amazon.actuals, tsmean.apple))
+                      'Mean-TS'=sMAPE(amazon.actuals, tsmean.apple))
 
 
 totals <- rbind(apple.smape, amazon.smape,boeing.smape)
