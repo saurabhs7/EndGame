@@ -1,0 +1,812 @@
+---
+title: "TimeSeries Project"
+author: 'Team - Endgame: Saurabh, Raghav, Shree'
+date: "5/31/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+#Load RDS from cleaned data
+```{r}
+all.stocks.data = readRDS('stockPrices.rds')
+all.news.data = readRDS('stockNews.rds')
+
+
+```
+
+```{r Update to date}
+all.stocks.data['date'] = as.Date(all.stocks.data$time)
+all.news.data['date'] = as.Date(all.news.data$time)
+```
+
+```{r}
+library(dplyr)
+
+stock.count <- all.stocks.data %>%
+  group_by(assetName) %>%
+  count(date)
+```
+
+
+
+```{r}
+library(tidyverse)
+news.daily.aggr <- all.news.data %>%
+  group_by(date,assetName) %>%
+  summarize(sum(sentimentClass, na.rm=TRUE),
+            mean(sentimentNegative),
+            mean(sentimentPositive),
+            mean(sentimentNeutral),
+            min(urgency),
+            sum(wordCount),
+            sum(bodySize),
+            sum(companyCount),
+            sum(sentenceCount),
+            sum(sentimentWordCount),
+            sum(relevance),
+            sum(noveltyCount12H),
+            sum(noveltyCount24H),
+            sum(noveltyCount3D),
+            sum(noveltyCount5D),
+            sum(noveltyCount7D),
+            sum(volumeCounts12H),
+            sum(volumeCounts24H),
+            sum(volumeCounts3D),
+            sum(volumeCounts5D),
+            sum(volumeCounts7D)
+            )
+
+head(news.daily.aggr)
+```
+
+
+```{r}
+stockList = list("Apple Inc","Boeing Co","Amazon.com Inc")
+```
+
+
+```{r}
+#all.stocks.data <- all.stocks.data[,-17] #Remove universe columns
+
+apple_prices =  all.stocks.data[all.stocks.data$assetName=="Apple Inc",]
+apple_news = all.news.data[all.news.data$assetName=="Apple Inc",]
+
+boeing_prices =  all.stocks.data[all.stocks.data$assetName=="Boeing Co",]
+boeing_news = all.news.data[all.news.data$assetName=="Boeing Co",]
+
+amazon_prices =  all.stocks.data[all.stocks.data$assetName=="Amazon.com Inc",]
+amazon_news = all.news.data[all.news.data$assetName=="Amazon.com Inc",]
+
+```
+
+```{r}
+prices_df_list = list(apple_prices,boeing_prices,amazon_prices)
+news_df_list = list(apple_news,boeing_news,amazon_news)
+```
+
+```{r}
+for (df in prices_df_list){
+  print(dim(df)[1])
+}
+```
+
+```{r}
+for (df in news_df_list){
+  print(dim(df)[1])
+}
+```
+
+#Apple final model dataset
+
+```{r}
+app.news.daily.aggr <- apple_news %>%
+  group_by(date) %>%
+  summarize(sum(sentimentNegative),
+            sum(sentimentPositive),
+            sum(sentimentNeutral),
+            min(urgency),
+            mean(wordCount),
+            mean(bodySize),
+            sum(companyCount),
+            mean(sentenceCount),
+            mean(sentimentWordCount),
+            sum(relevance),
+            sum(noveltyCount12H),
+            sum(noveltyCount24H),
+            sum(noveltyCount3D),
+            sum(noveltyCount5D),
+            sum(noveltyCount7D),
+            sum(volumeCounts12H),
+            sum(volumeCounts24H),
+            sum(volumeCounts3D),
+            sum(volumeCounts5D),
+            sum(volumeCounts7D)
+            )
+
+apple.merged <- merge(x = apple_prices,y=app.news.daily.aggr,by='date',all.x=TRUE)
+#head(apple.merged)
+
+#remove time and string columns
+apple.model.data = apple.merged[,-c(1,2,3,4,5)]
+head(apple.model.data)
+
+#replace NAs with 0
+apple.model.data[is.na(apple.model.data)] <- 0
+head(apple.model.data)
+```
+
+#Boeing final model dataset
+
+```{r}
+boeing.news.daily.aggr <- boeing_news %>%
+  group_by(date) %>%
+  summarize(sum(sentimentNegative),
+            sum(sentimentPositive),
+            sum(sentimentNeutral),
+            min(urgency),
+            mean(wordCount),
+            mean(bodySize),
+            sum(companyCount),
+            mean(sentenceCount),
+            mean(sentimentWordCount),
+            sum(relevance),
+            sum(noveltyCount12H),
+            sum(noveltyCount24H),
+            sum(noveltyCount3D),
+            sum(noveltyCount5D),
+            sum(noveltyCount7D),
+            sum(volumeCounts12H),
+            sum(volumeCounts24H),
+            sum(volumeCounts3D),
+            sum(volumeCounts5D),
+            sum(volumeCounts7D)
+            )
+
+boeing.merged <- merge(x = boeing_prices,y=boeing.news.daily.aggr, by='date', all.x=TRUE)
+#head(apple.merged)
+
+#remove time and string columns
+boeing.model.data = boeing.merged[,-c(1,2,3,4,5)]
+
+
+#replace NAs with 0
+boeing.model.data[is.na(boeing.model.data)] <- 0
+head(boeing.model.data)
+```
+
+#Amazon final model dataset
+
+```{r}
+amaz.news.daily.aggr <- amazon_news %>%
+  group_by(date) %>%
+  summarize(sum(sentimentNegative),
+            sum(sentimentPositive),
+            sum(sentimentNeutral),
+            min(urgency),
+            mean(wordCount),
+            mean(bodySize),
+            sum(companyCount),
+            mean(sentenceCount),
+            mean(sentimentWordCount),
+            sum(relevance),
+            sum(noveltyCount12H),
+            sum(noveltyCount24H),
+            sum(noveltyCount3D),
+            sum(noveltyCount5D),
+            sum(noveltyCount7D),
+            sum(volumeCounts12H),
+            sum(volumeCounts24H),
+            sum(volumeCounts3D),
+            sum(volumeCounts5D),
+            sum(volumeCounts7D)
+            )
+
+amazon.merged <- merge(x = amazon_prices,y=amaz.news.daily.aggr,by='date',all.x=TRUE)
+#head(apple.merged)
+
+#remove time and string columns
+amazon.model.data = amazon.merged[,-c(1,2,3,4,5)]
+
+
+#replace NAs with 0
+amazon.model.data[is.na(amazon.model.data)] <- 0
+head(amazon.model.data)
+```
+
+
+```{r}
+#Step method to adjust for apple stock split
+AppleOpenPrice <- ifelse(apple.merged$date<'2014-06-09',apple.merged$open,apple.merged$open*7)
+AppleOpenPrice.NoNa <- na.omit(AppleOpenPrice)
+
+#Plots
+plot(boeing_prices$date,boeing_prices$open,type='l',col='black',ylim=c(0,1000),ylab='Open Prices',xlab='Years',main='Open Price Plot from Feb 2007 to Dec 2016')
+lines(apple_prices$date,apple_prices$open,col='grey')
+lines(apple_prices$date,AppleOpenPrice,type='l',lty=4,col='green')
+lines(amazon_prices$date,amazon_prices$open,col='blue')
+legend('topleft',legend=c('Apple','Amazon','Boeing'),col=c('green','blue','black'),lty=1, cex=0.8)
+```
+
+
+
+
+#EDA / Tests 
+Open price time series
+Qlty - acf, pacf
+
+```{r}
+par(mfrow=c(1,2))
+acf(apple.model.data$open,main='Apple Open Price ACF')
+pacf(apple.model.data$open,main='Apple Open Price PACF')
+```
+
+
+```{r}
+par(mfrow=c(1,2))
+acf(amazon.model.data$open,main='Amazon Open Price ACF')
+pacf(amazon.model.data$open,main='Amazon Open Price PACF')
+```
+
+
+
+```{r}
+par(mfrow=c(1,2))
+acf(boeing.model.data$open,main='Boeing Open Price ACF')
+pacf(boeing.model.data$open,main='Boeing Open Price PACF')
+```
+
+Qntve adf, kpss
+## ADF Tests
+```{r}
+library(tseries)
+print('Apple ADF test')
+adf.test(apple.model.data$open)
+print('Amazon ADF test')
+adf.test(amazon.model.data$open)
+print('Boeing ADF test')
+adf.test(boeing.model.data$open)
+#kpss.test
+```
+
+
+## KPSS Tests
+
+```{r}
+library(tseries)
+print('Apple KPSS test')
+kpss.test(apple.model.data$open)
+print('Amazon KPSS test')
+kpss.test(amazon.model.data$open)
+print('Boeing KPSS test')
+kpss.test(boeing.model.data$open)
+#kpss.test
+```
+
+## Model Determination
+### Apple
+```{r}
+library(forecast)
+print('Apple Auto Arima')
+apple.arima.m1 <- auto.arima(AppleOpenPrice)
+summary(apple.arima.m1)
+checkresiduals(apple.arima.m1)
+
+```
+
+
+## Model Determination
+### Boeing
+```{r}
+print('Boeing Auto Arima')
+boeing.arima.m1 <- auto.arima(boeing.model.data$open)
+summary(boeing.arima.m1)
+checkresiduals(boeing.arima.m1)
+```
+
+
+## Model Determination
+### Amazon
+```{r}
+print('Amazon Auto Arima')
+amazon.arima.m1 <- auto.arima(amazon.model.data$open)
+summary(amazon.arima.m1)
+checkresiduals(amazon.arima.m1)
+```
+
+# Prepare news PCA dataset
+
+```{r PCA and top components with 95% explained variance selected}
+
+#PCA For Apple
+app.pca.news <- app.news.daily.aggr[,-1]
+app.pca.news <- prcomp(app.pca.news, center = TRUE,scale. = TRUE)
+app.pca.x <- app.pca.news
+
+app.pca.news <- cbind(date=app.news.daily.aggr[,1],app.pca.news$x[,1:7])
+apple.pca.model.data <- merge(x = apple_prices,y = app.pca.news,by='date',all.x=TRUE)
+rownames(apple.pca.model.data) <- apple.pca.model.data[,1]
+apple.pca.model.data <- apple.pca.model.data[,-c(1,2,3,4,5)]
+#apple.pca.model.data <- na.omit(apple.pca.model.data)
+
+#PCA For Boeing
+boe.pca.news <- boeing.news.daily.aggr[,-1]
+boe.pca.news <- prcomp(boe.pca.news, center = TRUE,scale. = TRUE)
+boe.pca.x <- boe.pca.news
+
+boe.pca.news <- cbind(date=boeing.news.daily.aggr[,1],boe.pca.news$x[,1:7])
+boeing.pca.model.data <- merge(x = boeing_prices,y = boe.pca.news,by='date',all.x=TRUE)
+rownames(boeing.pca.model.data) <- boeing.pca.model.data[,1]
+boeing.pca.model.data <- boeing.pca.model.data[,-c(1,2,3,4,5)]
+#boeing.pca.model.data <- na.omit(boeing.pca.model.data)
+
+#PCA For Amazon
+amaz.pca.news <- amaz.news.daily.aggr[,-1]
+amaz.pca.news <- prcomp(amaz.pca.news, center = TRUE,scale. = TRUE)
+amaz.pca.x <- amaz.pca.news
+
+amaz.pca.news <- cbind(date=amaz.news.daily.aggr[,1],amaz.pca.news$x[,1:7])
+amaz.pca.model.data <- merge(x = amazon_prices,y = amaz.pca.news,by='date',all.x=TRUE)
+rownames(amaz.pca.model.data) <- amaz.pca.model.data[,1]
+amaz.pca.model.data <- amaz.pca.model.data[,-c(1,2,3,4,5)]
+#amaz.pca.model.data <- na.omit(amaz.pca.model.data)
+
+
+```
+
+```{r Biplots}
+biplot(app.pca.x)
+biplot(boe.pca.x)
+biplot(amaz.pca.x)
+```
+
+```{r}
+#Save adjusted price to original dataset
+apple.pca.model.data$open <- AppleOpenPrice.NoNa
+
+#Fill NAs
+apple.pca.model.data[is.na(apple.pca.model.data)] <- 0
+amaz.pca.model.data[is.na(amaz.pca.model.data)] <- 0
+boeing.pca.model.data[is.na(boeing.pca.model.data)] <- 0
+
+#Change for making different period
+fcst.days <- 10
+apple.total<- length(apple.pca.model.data$open)
+amazon.total<- length(amaz.pca.model.data$open)
+boeing.total<- length(boeing.pca.model.data$open)
+
+#Size of train set
+apple.size<- apple.total-fcst.days
+amazon.size <- amazon.total-fcst.days
+boeing.size <- boeing.total-fcst.days
+
+#Save actuals
+apple.actuals <- tail(apple.pca.model.data$open, fcst.days)
+amazon.actuals <- tail(amaz.pca.model.data$open, fcst.days)
+boeing.actuals <- tail(boeing.pca.model.data$open, fcst.days)
+
+#Subset to train
+apple.pca.model.data <- apple.pca.model.data[1:apple.size,]
+amaz.pca.model.data <- amaz.pca.model.data[1:amazon.size,]
+boeing.pca.model.data <- boeing.pca.model.data[1:boeing.size,]
+
+
+
+
+
+#Subset to test xreg
+dropcolsTestAp <- which(colnames(apple.pca.model.data) %in% c("open", "universe"))
+dropcolsTestAz <- which(colnames(amaz.pca.model.data) %in% c("open", "universe"))
+dropcolsTestBo <- which(colnames(boeing.pca.model.data) %in% c("open", "universe"))
+
+apple.pca.model.test <- as.matrix(tail(apple.pca.model.data[,-c(dropcolsTestAp)], fcst.days))
+
+amaz.pca.model.test <- as.matrix(tail(amaz.pca.model.data[,-c(dropcolsTestAz)], fcst.days))
+
+boeing.pca.model.test <- as.matrix(tail(boeing.pca.model.data[,-c(dropcolsTestBo)], fcst.days))
+
+```
+
+#Modeling for Apple 
+
+#Model 1 - Arfima
+
+```{r}
+suppressMessages(library(forecast))
+
+#Create PCA matrix
+dropcolsPCA <- which(colnames(apple.pca.model.data) %in% c("open", "universe"))
+
+pcaMatrix <- as.matrix(apple.pca.model.data[,-c(dropcolsPCA)])
+
+#Run arfima
+apple.model.arfima <- forecast::arfima(ts(apple.pca.model.data$open),xreg = pcaMatrix)
+
+summary(apple.model.arfima)
+arf.apple <- forecast(apple.model.arfima, h=fcst.days, xreg=apple.pca.model.test)
+
+plot(arf.apple)
+```
+
+#Model 2 - Neural Net
+```{r}
+library(nnfor)
+fit1 <- elm(y=ts(apple.pca.model.data$open))
+nn.apple <- forecast(fit1, h=fcst.days)
+plot(nn.apple)
+```
+
+#Model 3 - ARMA with errors
+
+```{r Apple Regression with ARMA errors}
+
+apple.model.lm <- lm(apple.pca.model.data$open~pcaMatrix)
+summary(apple.model.lm)
+# par(mfrow=c(1,2))
+# acf(apple.model.lm$residuals, lag=100)
+# qqnorm(apple.model.lm$residuals)
+# qqline(apple.model.lm$residuals)
+
+apple.model.lm.arima <- auto.arima(ts(apple.pca.model.data$open), xreg=pcaMatrix)
+
+summary(apple.model.lm.arima)
+# #
+# par(mfrow=c(1,2))
+# acf(apple.model.lm.arima$residuals, lag=100)
+# qqnorm(apple.model.lm.arima$residuals)
+# qqline(apple.model.lm.arima$residuals)
+
+arima.apple <- forecast(apple.model.lm.arima, h=fcst.days, xreg=apple.pca.model.test)
+
+plot(arima.apple)
+```
+
+# Model 4 - XGBOOST
+
+```{r}
+library(xgboost)
+library(Ckmeans.1d.dp)
+
+dropcols <- which(colnames(pcaMatrix) %in% c("returnsOpenNextMktres10", "close"))
+#appl.model2.arfima <- arfima::arfima(ts(apple.pca.model.data$open),order=c(0,1,0),xreg = pcaMatrix)
+pcaMatrix1 <- pcaMatrix[,-c(dropcols)] #remove close price
+
+pcaMatrix1[,1] <- log(pcaMatrix1[,1])
+
+#Create input for xgboost
+trainDMatrix <- xgb.DMatrix(data = pcaMatrix1, label = apple.pca.model.data$open)
+
+#Set parameters of model
+params <- list(booster = "gbtree"
+               , objective = "reg:linear"
+               , eta=0.4
+               , gamma=0
+               )
+
+#Cross-validation
+xgb.tab <- xgb.cv(data = trainDMatrix
+                  , param = params
+                  , maximize = FALSE, evaluation = "rmse", nrounds = 100
+                  , nthreads = 10, nfold = 2, early_stopping_round = 10)
+
+#Number of rounds
+num_iterations = xgb.tab$best_iteration
+
+model <- xgb.train(data = trainDMatrix
+                               , param = params
+                               , maximize = FALSE, evaluation = 'rmse', nrounds = num_iterations)
+
+importance <- xgb.importance(feature_names = colnames(pcaMatrix1), model = model)
+xgb.ggplot.importance(importance_matrix = importance)
+
+dropcolsTestM <- which(colnames(apple.pca.model.test) %in% c("returnsOpenNextMktres10", "close"))
+pcaMatrixTest <- apple.pca.model.test[,-c(dropcolsTestM)]
+testDMatrix <- xgb.DMatrix(data = pcaMatrixTest)
+
+xgb.apple = predict(model, testDMatrix)
+```
+
+
+
+#Modeling for Amazon 
+
+#Model 1 - Arfima
+
+```{r}
+suppressMessages(library(forecast))
+
+#Create PCA matrix
+dropcolsPCA <- which(colnames(amaz.pca.model.data) %in% c("open", "universe"))
+
+pcaMatrix <- as.matrix(amaz.pca.model.data[,-c(dropcolsPCA)])
+
+#Run arfima
+amazon.model.arfima <- forecast::arfima(ts(amaz.pca.model.data$open),xreg = pcaMatrix)
+
+summary(amazon.model.arfima)
+arf.amazon <- forecast(amazon.model.arfima, h=fcst.days, xreg=amaz.pca.model.test)
+plot(arf.amazon)
+```
+
+
+#Model 2  - Neural Net
+```{r}
+library(nnfor)
+fit2 <- elm(ts(amaz.pca.model.data$open))
+nn.amazon <- forecast( fit2 , h=fcst.days)
+plot(nn.amazon)
+
+```
+
+#Model 3 - ARMA with errors
+
+```{r Amazon Regression with ARMA errors}
+
+amazon.model.lm <- lm(amaz.pca.model.data$open~pcaMatrix)
+summary(amazon.model.lm)
+
+# plot(amazon.model.lm)
+# 
+# par(mfrow=c(1,2))
+# acf(amazon.model.lm$residuals, lag=100)
+# qqnorm(amazon.model.lm$residuals)
+# qqline(amazon.model.lm$residuals)
+
+amazon.model.lm.arima <- auto.arima(amaz.pca.model.data$open, xreg=pcaMatrix)
+summary(amazon.model.lm.arima)
+
+# par(mfrow=c(1,2))
+# acf(amazon.model.lm.arima$residuals, lag=100)
+# qqnorm(amazon.model.lm.arima$residuals)
+# qqline(amazon.model.lm.arima$residuals)
+
+arima.amazon <- forecast(amazon.model.lm.arima, h=fcst.days, xreg=amaz.pca.model.test)
+plot(arima.amazon)
+```
+
+# Model 4 - XGBOOST
+
+```{r}
+library(xgboost)
+library(Ckmeans.1d.dp)
+
+dropcols <- which(colnames(pcaMatrix) %in% c("returnsOpenNextMktres10", "close"))
+#appl.model2.arfima <- arfima::arfima(ts(apple.pca.model.data$open),order=c(0,1,0),xreg = pcaMatrix)
+pcaMatrix1 <- pcaMatrix[,-c(dropcols)] #remove close price
+
+pcaMatrix1[,1] <- log(pcaMatrix1[,1])
+
+#Create input for xgboost
+trainDMatrix <- xgb.DMatrix(data = pcaMatrix1, label = amaz.pca.model.data$open)
+
+#Set parameters of model
+params <- list(booster = "gbtree"
+               , objective = "reg:linear"
+               , eta=0.4
+               , gamma=0
+               )
+
+#Cross-validation
+xgb.tab <- xgb.cv(data = trainDMatrix
+                  , param = params
+                  , maximize = FALSE, evaluation = "rmse", nrounds = 100
+                  , nthreads = 10, nfold = 2, early_stopping_round = 10)
+
+#Number of rounds
+num_iterations = xgb.tab$best_iteration
+
+model <- xgb.train(data = trainDMatrix
+                               , param = params
+                               , maximize = FALSE, evaluation = 'rmse', nrounds = num_iterations)
+
+importance <- xgb.importance(feature_names = colnames(pcaMatrix1), model = model)
+xgb.ggplot.importance(importance_matrix = importance)
+
+dropcolsTestM <- which(colnames(amaz.pca.model.test) %in% c("returnsOpenNextMktres10", "close"))
+pcaMatrixTest <- amaz.pca.model.test[,-c(dropcolsTestM)]
+testDMatrix <- xgb.DMatrix(data = pcaMatrixTest)
+
+xgb.amazon = predict(model, testDMatrix)
+```
+
+
+#Modeling for Boeing 
+
+#Model 1 - Arfima
+
+```{r}
+
+#Create PCA matrix
+dropcolsPCA <- which(colnames(boeing.pca.model.data) %in% c("open", "universe"))
+
+pcaMatrix <- as.matrix(boeing.pca.model.data[,-c(dropcolsPCA)])
+
+
+#Run arfima
+boeing.model.arfima <- forecast::arfima(ts(boeing.pca.model.data$open),xreg = pcaMatrix)
+
+summary(boeing.model.arfima)
+arf.boeing <- forecast(boeing.model.arfima, h=fcst.days, xreg=boeing.pca.model.test)
+
+plot(arf.boeing)
+```
+
+#Model 2 - Neural Net
+```{r}
+library(nnfor)
+fit3 <- elm(ts(boeing.pca.model.data$open))
+nn.boeing <- forecast(fit3, h=fcst.days)
+plot(nn.boeing)
+```
+
+#Model 3 - ARMA with errors
+
+```{r Being Regression with ARMA errors}
+
+boeing.model.lm <- lm(boeing.pca.model.data$open~pcaMatrix)
+
+# par(mfrow=c(1,2))
+# acf(boeing.model.lm$residuals, lag=100)
+# qqnorm(boeing.model.lm$residuals)
+# qqline(boeing.model.lm$residuals)
+
+boeing.model.lm.arima <- auto.arima(boeing.pca.model.data$open, xreg=pcaMatrix)
+summary(boeing.model.lm.arima)
+
+# par(mfrow=c(1,2))
+# acf(boeing.model.lm.arima$residuals, lag=100)
+# qqnorm(boeing.model.lm.arima$residuals)
+# qqline(boeing.model.lm.arima$residuals)
+
+arima.boeing <- forecast(boeing.model.lm.arima, h=fcst.days, xreg=boeing.pca.model.test)
+plot(arima.boeing)
+```
+
+# Model 4 - XGBOOST
+
+```{r}
+library(xgboost)
+library(Ckmeans.1d.dp)
+
+dropcols <- which(colnames(pcaMatrix) %in% c("returnsOpenNextMktres10", "close"))
+#appl.model2.arfima <- arfima::arfima(ts(apple.pca.model.data$open),order=c(0,1,0),xreg = pcaMatrix)
+pcaMatrix1 <- pcaMatrix[,-c(dropcols)] #remove close price
+
+pcaMatrix1[,1] <- log(pcaMatrix1[,1])
+
+#Create input for xgboost
+trainDMatrix <- xgb.DMatrix(data = pcaMatrix1, label = boeing.pca.model.data$open)
+
+#Set parameters of model
+params <- list(booster = "gbtree"
+               , objective = "reg:linear"
+               , eta=0.4
+               , gamma=0
+               )
+
+#Cross-validation
+xgb.tab <- xgb.cv(data = trainDMatrix
+                  , param = params
+                  , maximize = FALSE, evaluation = "rmse", nrounds = 100
+                  , nthreads = 10, nfold = 2, early_stopping_round = 10)
+
+#Number of rounds
+num_iterations = xgb.tab$best_iteration
+
+model <- xgb.train(data = trainDMatrix
+                               , param = params
+                               , maximize = FALSE, evaluation = 'rmse', nrounds = num_iterations)
+
+importance <- xgb.importance(feature_names = colnames(pcaMatrix1), model = model)
+xgb.ggplot.importance(importance_matrix = importance)
+
+dropcolsTestM <- which(colnames(amaz.pca.model.test) %in% c("returnsOpenNextMktres10", "close"))
+pcaMatrixTest <- amaz.pca.model.test[,-c(dropcolsTestM)]
+testDMatrix <- xgb.DMatrix(data = pcaMatrixTest)
+
+xgb.boeing = predict(model, testDMatrix)
+```
+
+# Results
+```{r Calc mean of preds}
+boe.mean <-cbind(arf.boeing$mean, arima.boeing$mean, nn.boeing$mean, xgb.boeing)
+app.bmean <-cbind(arf.apple$mean, arima.apple$mean, nn.apple$mean, xgb.apple)
+amz.bmean <-cbind(arf.amazon$mean, arima.amazon$mean, nn.amazon$mean, xgb.amazon)
+
+mean.boeing <- rowMeans(boe.mean)
+mean.apple <- rowMeans(app.bmean)
+mean.amazon <- rowMeans(amz.bmean)
+
+#Only TS values
+boe.tsmean <-cbind(arf.boeing$mean, arima.boeing$mean, nn.boeing$mean)
+app.tsbmean <-cbind(arf.apple$mean, arima.apple$mean, nn.apple$mean)
+amz.tsbmean <-cbind(arf.amazon$mean, arima.amazon$mean, nn.amazon$mean)
+
+tsmean.boeing <- rowMeans(boe.tsmean)
+tsmean.apple <- rowMeans(app.tsbmean)
+tsmean.amazon <- rowMeans(amz.tsbmean)
+```
+
+```{r Plot for Apple}
+dtIdx <- seq(fcst.days)
+
+plot(dtIdx,apple.actuals,type='l',col='black',ylab='Open Prices',ylim=c(700,950),
+     xlab='Forecast days',main='10 Day prediction - Apple')
+lines(dtIdx,arf.apple$mean,type='l',lty=2,col='green')
+lines(dtIdx,arima.apple$mean,lty=2,col='blue')
+lines(dtIdx,nn.apple$mean,lty=2,col='orange')
+lines(dtIdx,xgb.apple,type='l',lty=2,col='grey')
+lines(dtIdx,mean.apple,type='l',col='violet')
+lines(dtIdx,tsmean.apple,type='l',col='cyan')
+legend("bottomleft", legend=c('Actuals','Arfima','Arima', 'NeuralNet', 'XGB','Mean','Mean-TS'),
+       col=c('black','green','blue', 'orange', 'grey', 'violet', 'cyan'),lty=c(1,2,2,2,2,1,1), cex=0.52, bty = "n")
+
+
+```
+
+```{r Plot for Amazon}
+dtIdx <- seq(fcst.days)
+
+plot(dtIdx,amazon.actuals,type='l',col='black',ylab='Open Prices',ylim=c(720,780),
+     xlab='Forecast days',main='10 Day prediction - Amazon')
+lines(dtIdx,arf.amazon$mean,type='l',lty=2,col='green')
+lines(dtIdx,arima.amazon$mean,lty=2,col='blue')
+lines(dtIdx,nn.amazon$mean,lty=2,col='orange')
+lines(dtIdx,xgb.amazon,type='l',lty=2,col='grey')
+lines(dtIdx,mean.amazon,type='l',col='violet')
+lines(dtIdx,tsmean.amazon,type='l',col='cyan')
+legend("bottomleft", legend=c('Actuals','Arfima','Arima', 'NeuralNet', 'XGB','Mean','Mean-TS'),
+       col=c('black','green','blue', 'orange', 'grey', 'violet', 'cyan'),lty=c(1,2,2,2,2,1,1), cex=0.52, bty = "n")
+
+```
+
+
+```{r Plot for Boeing}
+dtIdx <- seq(fcst.days)
+
+plot(dtIdx,boeing.actuals,type='l',col='black',ylab='Open Prices',ylim=c(25,165),
+     xlab='Forecast days',main='10 Day prediction - Boeing')
+lines(dtIdx,arf.boeing$mean,type='l',lty=2,col='green')
+lines(dtIdx,arima.boeing$mean,lty=2,col='blue')
+lines(dtIdx,nn.boeing$mean,lty=2,col='orange')
+lines(dtIdx,xgb.boeing,type='l',lty=2,col='grey')
+lines(dtIdx,mean.boeing,type='l',col='violet')
+lines(dtIdx,tsmean.boeing,type='l',col='cyan')
+legend("bottomleft", legend=c('Actuals','Arfima','Arima', 'NeuralNet', 'XGB','Mean','Mean-TS'),
+       col=c('black','green','blue', 'orange', 'grey', 'violet', 'cyan'),lty=c(1,2,2,2,2,1,1), cex=0.52, bty = "n")
+
+```
+
+
+```{R Smape}
+library(wavelets)
+library(TSPred)
+boeing.smape <- cbind(Arfima=sMAPE(boeing.actuals, arf.boeing$mean),
+                      ARIMA=sMAPE(boeing.actuals, arima.boeing$mean),
+                      NeuralNet=sMAPE(boeing.actuals, nn.boeing$mean),
+                      XGB=sMAPE(boeing.actuals, xgb.boeing),
+                      Mean=sMAPE(boeing.actuals, mean.boeing),
+                      Mean-TS=sMAPE(boeing.actuals, tsmean.boeing))
+
+amazon.smape <- cbind(Arfima=sMAPE(amazon.actuals, arf.amazon$mean),
+                      ARIMA=sMAPE(amazon.actuals, arima.amazon$mean),
+                      NeuralNet=sMAPE(amazon.actuals, nn.amazon$mean),
+                      XGB=sMAPE(amazon.actuals, xgb.amazon),
+                      Mean=sMAPE(amazon.actuals, mean.amazon),
+                      Mean-TS=sMAPE(amazon.actuals, tsmean.amazon))
+
+apple.smape <- cbind(Arfima=sMAPE(apple.actuals, arf.apple$mean),
+                      ARIMA=sMAPE(apple.actuals, arima.apple$mean),
+                      NeuralNet=sMAPE(apple.actuals, nn.apple$mean),
+                      XGB=sMAPE(apple.actuals, xgb.apple),
+                      Mean=sMAPE(amazon.actuals, mean.apple),
+                      Mean-TS=sMAPE(amazon.actuals, tsmean.apple))
+
+
+totals <- rbind(apple.smape, amazon.smape,boeing.smape)
+
+rownames(totals) <- c("Apple", "Amazon", "Boeing")
+
+totals
+
+```
